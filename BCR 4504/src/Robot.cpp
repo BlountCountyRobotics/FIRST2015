@@ -48,11 +48,11 @@ class Robot: public SampleRobot
 
 	void RobotInit()
 	{
+		myRobot->SetExpiration(0.1);
 	}
 
 	void OperatorControl()
 	{
-		myRobot->SetExpiration(0.1);
 		myRobot->SetSafetyEnabled(false);
 		while (IsOperatorControl() and IsEnabled())
 		{
@@ -62,10 +62,12 @@ class Robot: public SampleRobot
 			bool a_drive = true;
 			if(buttons->GetRawButton(7))
 			{
+				SmartDashboard::PutString("Drive Mode: ", "Tank Drive");
 				t_drive = true;
 				a_drive = false;
 			}else
 			{
+				SmartDashboard::PutString("Drive Mode: ", "Arcade Drive");
 				t_drive = false;
 				a_drive = true;
 			}
@@ -80,7 +82,7 @@ class Robot: public SampleRobot
 				}
 				if(t_drive)
 				{
-					myRobot->TankDrive(stick, 1, stick, 5, true);
+					myRobot->TankDrive(-stick->GetRawAxis(1), -stick->GetRawAxis(5), true);
 				}else if(a_drive)
 				{
 					myRobot->ArcadeDrive(-stick->GetRawAxis(1), -stick->GetRawAxis(0), true);
