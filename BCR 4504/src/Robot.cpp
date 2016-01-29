@@ -1,19 +1,11 @@
 #include "WPILib.h"
 
-/**
- * This is a demo program showing the use of the RobotDrive class.
- * The SampleRobot class is the base of a robot application that will automatically call your
- * Autonomous and OperatorControl methods at the right time as controlled by the switches on
- * the driver station or the field controls.
- *
- * WARNING: While it may look like a good choice to use for your code if you're inexperienced,
- * don't. Unless you know what you are doing, complex code will be much more difficult under
- * this system. Use IterativeRobot or Command-Based instead if you're new.
- */
 class Robot: public SampleRobot
 {
 	CANTalon *right = new CANTalon(0);
 	CANTalon *left = new CANTalon(1);
+	//CANTalon *motor1 = new CANTalon(2);
+	//CANTalon *motor2 = new CANTalon(3);
 	Joystick *stick = new Joystick(0);
 	Joystick *buttons = new Joystick(1);
 	Joystick *tank = new Joystick(2);
@@ -26,24 +18,11 @@ class Robot: public SampleRobot
 	{
 		//std::string autoSelected = *((std::string*)chooser->GetSelected());
 		std::string autoSelected = SmartDashboard::GetString("Auto Selector", autoNameDefault);
-		std::cout << "Auto selected: " << autoSelected << std::endl;
-
-		if(autoSelected == autoNameCustom)
-		{
-			//printf("Running custom Autonomous");
-			myRobot->SetSafetyEnabled(false);
-			myRobot->Drive(-0.5, 1.0); 	// spin at half speed
-			Wait(2.0); 					// for 2 seconds
-			myRobot->Drive(0.0, 0.0); 	// stop robot
-		} else
-		{
-			//printf("Running default Autonomous");
-			myRobot->SetSafetyEnabled(false);
-			myRobot->Drive(-0.5, 0.0); 	// drive forwards half speed
-			Wait(3.0); 				//    for 2 seconds
-			myRobot->Drive(0.0, 0.0); 	// stop robot
-		}
-
+		myRobot->SetSafetyEnabled(false);
+		myRobot->SetLeftRightMotorOutputs(0.5, 0.0);
+		//Add condition to stop when the ballast comes into view. Need to wait until vision can be done.
+		Wait(10.0);
+		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
 
 	void RobotInit()
@@ -54,6 +33,7 @@ class Robot: public SampleRobot
 	void OperatorControl()
 	{
 		myRobot->SetSafetyEnabled(false);
+		//motor1->EnableControl();
 		while (IsOperatorControl() and IsEnabled())
 		{
 			SmartDashboard::PutNumber("Motor Y: ", stick->GetY());
@@ -87,6 +67,15 @@ class Robot: public SampleRobot
 				{
 					myRobot->ArcadeDrive(-stick->GetRawAxis(1), -stick->GetRawAxis(0), true);
 				}
+				/*if(buttons->GetRawButton(3))
+				{
+					motor1->SetPID(1, 3, 4);
+					motor1->Set(f);
+				}else if(buttons->GetRawButton(4))
+				{
+					motor1->SetPID(1, 3, 4);
+					motor1->Set(-f);
+				}*/
 			}else
 			{
 				myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
