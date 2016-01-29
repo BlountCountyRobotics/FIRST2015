@@ -13,9 +13,18 @@ class Robot: public SampleRobot
 	SendableChooser *chooser = new SendableChooser();
 	const std::string autoNameDefault = "Default";
 	const std::string autoNameCustom = "Stronghold";
-
+	Gyro gyro;
+	static const double Kp = 0.03;
 	void Autonomous()
 	{
+		gyro.Reset (0);
+		while (IsAutonomous(0))
+		{
+			GetWatchdog().Feed();
+			double angle = gyro.GetAngle(0);
+			myRobot.Drive(-1.0, -angle * Kp);
+			Wait(0.004);
+		}
 		//std::string autoSelected = *((std::string*)chooser->GetSelected());
 		std::string autoSelected = SmartDashboard::GetString("Auto Selector", autoNameDefault);
 		myRobot->SetSafetyEnabled(false);
@@ -24,6 +33,8 @@ class Robot: public SampleRobot
 		Wait(10.0);
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
+
+
 
 	void RobotInit()
 	{
