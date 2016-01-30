@@ -15,7 +15,11 @@ class Robot: public SampleRobot
 	const std::string autoNameDefault = "Default";
 	AnalogInput *tiltsensor = new AnalogInput(0);
 	AnalogGyro *gyro = new AnalogGyro(1);
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 189e473c6d4313d8882fdde1ab21ad5059bebd4f
 	void Autonomous()
 	{
 		static const double Kp = 0.03;
@@ -28,6 +32,7 @@ class Robot: public SampleRobot
 		while(!flag)
 		{
 			double angle = gyro->GetAngle();
+<<<<<<< HEAD
 			myRobot->Drive(0.85, -angle * Kp);
 			static int revolutions = 0;
 			Wait(0.0004);
@@ -37,6 +42,16 @@ class Robot: public SampleRobot
 				flag = true;
 			}
 			RobotDrive(0.0, 0.0);
+=======
+			myRobot->Drive(0.25, -angle * Kp);
+			static int revolutions = 0;
+			Wait(0.004);
+			revolutions++;
+			if(revolutions == 2500)
+			{
+				flag = true;
+			}
+>>>>>>> 189e473c6d4313d8882fdde1ab21ad5059bebd4f
 		}
 		//Add condition to stop when the ballast comes into view. Need to wait until vision can be done.
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
@@ -46,7 +61,11 @@ class Robot: public SampleRobot
 	{
 		myRobot->SetExpiration(0.1);
 		gyro->Calibrate();
+<<<<<<< HEAD
 		gyro->SetSensitivity(0.000035);
+=======
+		gyro->SetSensitivity(0.007);
+>>>>>>> 189e473c6d4313d8882fdde1ab21ad5059bebd4f
 	}
 
 	void OperatorControl()
