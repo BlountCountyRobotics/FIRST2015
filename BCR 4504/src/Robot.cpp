@@ -36,8 +36,25 @@ class Robot: public SampleRobot
 			{
 				flag = true;
 			}
-			RobotDrive(0.0, 0.0);
+
 		}
+
+		{
+			if( abs(currentAngle) >= abs(destinationAngle))
+			{
+				drivetrain.tankdrive(0,0);
+			}
+
+			else if ( destinationAngle  > currentAngle)
+
+			{
+				drivetrain.tankDrive(reverseSpeed, forwardSpedd);
+			}else
+				{
+					drivetrain.tankDrive(forwardSpeed, reverseSpeed)
+				}
+		}
+
 		//Add condition to stop when the ballast comes into view. Need to wait until vision can be done.
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
