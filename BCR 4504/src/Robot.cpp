@@ -40,14 +40,14 @@ class Robot: public SampleRobot
 		}
 
 		{
-			if( abs(currentAngle) >= abs(destinationAngle))
+			if( abs(currentAngle) >= abs(destinationAngle))  //Needs to be define
 			{
 				drivetrain.tankdrive(0,0);
 			}
 
 			else if ( destinationAngle  > currentAngle)
 
-			{
+			{  //Does reverseSpeed need to be define or asign to something?
 				drivetrain.tankDrive(reverseSpeed, forwardSpedd);
 			}else
 				{
