@@ -2,57 +2,50 @@
 
 class Robot: public SampleRobot
 {
-	//Compressor *compressor = new Compressor(3);
+	Compressor *compressor = new Compressor(3);
 	CANTalon *right = new CANTalon(0);
 	CANTalon *left = new CANTalon(1);
 	//CANTalon *motor1 = new CANTalon(2);
 	//CANTalon *motor2 = new CANTalon(3);
 	Joystick *stick = new Joystick(0);
 	Joystick *buttons = new Joystick(1);
-	Joystick *tank = new Joystick(2);
 	RobotDrive *myRobot = new RobotDrive(left, right);
 	SendableChooser *chooser = new SendableChooser();
 	const std::string autoNameDefault = "Default";
 	AnalogInput *tiltsensor = new AnalogInput(0);
 	AnalogGyro *gyro = new AnalogGyro(1);
-<<<<<<< HEAD
-
-=======
 	
->>>>>>> 189e473c6d4313d8882fdde1ab21ad5059bebd4f
 	void Autonomous()
 	{
 		static const double Kp = 0.03;
 		gyro->Reset();
 		//std::string autoSelected = *((std::string*)chooser->GetSelected());
 		std::string autoSelected = SmartDashboard::GetString("Auto Selector", autoNameDefault);
-		SmartDashboard::PutNumber("Gyro: ", gyro->GetAngle());
 		myRobot->SetSafetyEnabled(false);
-		bool flag;
+		bool flag, flag2;
+		std::ofstream file("gyro.txt", std::ofstream::out);
 		while(!flag)
 		{
 			double angle = gyro->GetAngle();
-<<<<<<< HEAD
-			myRobot->Drive(0.85, -angle * Kp);
-			static int revolutions = 0;
-			Wait(0.0004);
-			revolutions++;
-			if(revolutions == 8500)
-			{
-				flag = true;
-			}
-			RobotDrive(0.0, 0.0);
-=======
 			myRobot->Drive(0.25, -angle * Kp);
 			static int revolutions = 0;
+			if(file.is_open())
+			{
+				file << revolutions << '\t';
+				file << -angle * Kp << '\n';
+			}else if(!flag2)
+			{
+				SmartDashboard::PutString("Error: ", "Cannot load file");
+				flag2 = true;
+			}
 			Wait(0.004);
 			revolutions++;
-			if(revolutions == 2500)
+			if(revolutions == 2300)
 			{
 				flag = true;
 			}
->>>>>>> 189e473c6d4313d8882fdde1ab21ad5059bebd4f
 		}
+		file.close();
 		//Add condition to stop when the ballast comes into view. Need to wait until vision can be done.
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
@@ -60,12 +53,8 @@ class Robot: public SampleRobot
 	void RobotInit()
 	{
 		myRobot->SetExpiration(0.1);
-		gyro->Calibrate();
-<<<<<<< HEAD
-		gyro->SetSensitivity(0.000035);
-=======
 		gyro->SetSensitivity(0.007);
->>>>>>> 189e473c6d4313d8882fdde1ab21ad5059bebd4f
+		gyro->Calibrate();
 	}
 
 	void OperatorControl()
@@ -79,17 +68,13 @@ class Robot: public SampleRobot
 			SmartDashboard::PutNumber("Motor X: ", stick->GetX());
 			bool t_drive = false;
 			bool a_drive = true;
-			bool toggle = true;
+			static bool toggle = true;
 			SmartDashboard::PutNumber("Test: ",toggle);
-			if(stick->GetRawButton(1) && toggle)
+			if(stick->GetRawButton(1))
 			{
-				//compressor->SetClosedLoopControl(compressor->Enabled() ? false : true);
-				toggle = false;
+				toggle = !toggle;
 			}
-			if(!stick->GetRawButton(1) && !toggle)
-			{
-				toggle = true;
-			}
+			compressor->SetClosedLoopControl(toggle);
 			if(buttons->GetRawButton(7))
 			{
 				SmartDashboard::PutString("Drive Mode: ", "Tank Drive");
@@ -102,7 +87,8 @@ class Robot: public SampleRobot
 				a_drive = true;
 			}
 			SmartDashboard::PutNumber("Gyro Rate: ", gyro->GetRate());
-			SmartDashboard::PutNumber("Gyro Angle: ", gyro->GetAngle());
+			SmartDashboard::PutNumber("Gyro Angle: ", fmod(gyro->GetAngle(),360.0));
+			//SmartDashboard::PutNumber("Gyro Angle: ", gyro->GetAngle());
 			if(stick->GetRawButton(5))
 			{
 				if(stick->GetRawAxis(2) < 0.1)
@@ -138,6 +124,26 @@ class Robot: public SampleRobot
 
 	void Test()
 	{
+		static const double Kp = 0.03;
+		gyro->Reset();
+		std::ofstream file("gyro.txt", std::ofstream::out);
+		while(true)
+		{
+			double angle = gyro->GetAngle();
+			static int revolutions = 0;
+			if(file.is_open())
+			{
+				file << revolutions << '\t';
+				file << -angle * Kp << '\n';
+				SmartDashboard::PutString("Error: ", " ");
+			}else
+			{
+				SmartDashboard::PutString("Error: ", "Cannot load file");
+			}
+			Wait(0.01);
+			revolutions++;
+		}
+		file.close();
 	}
 
 	void Disabled()
