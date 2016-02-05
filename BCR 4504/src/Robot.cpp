@@ -48,7 +48,7 @@ class Robot: public SampleRobot
 			else if ( destinationAngle  > currentAngle)
 
 			{  //Does reverseSpeed need to be define or asign to something?
-				drivetrain.tankDrive(reverseSpeed, forwardSpedd);
+				drivetrain.tankDrive(reverseSpeed, forwardSpeed);
 			}else
 				{
 					drivetrain.tankDrive(forwardSpeed, reverseSpeed)
