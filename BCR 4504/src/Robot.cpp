@@ -15,6 +15,8 @@ class Robot: public SampleRobot
 	AnalogInput *tiltsensor = new AnalogInput(0);
 	AnalogGyro *gyro = new AnalogGyro(1);
 	double gyros[535];
+	BuiltInAccelerometer *accel = new BuiltInAccelerometer(Accelerometer::Range::kRange_8G);
+	const double kUpdatePeriod = 0.005;
 	
 	double integral(double angle, int start)
 	{
@@ -141,6 +143,27 @@ class Robot: public SampleRobot
 				myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 			}
 			Wait(0.005);
+			double previousX = 0;
+			double previousY = 0;
+			double previousZ = 1;
+			double xAcceleration = accel->GetX();
+			double yAcceleration = accel->GetY();
+			double zAcceleration = accel->GetZ();
+
+			SmartDashboard::PutNumber("X-Axis G:", xAcceleration);
+			SmartDashboard::PutNumber("Y-Axis G:", yAcceleration);
+			SmartDashboard::PutNumber("Z-Axis G:", zAcceleration);
+
+			SmartDashboard::PutNumber("Recursive X-Axis Average:", ((xAcceleration*0.1) + (0.9*previousX)));
+
+			SmartDashboard::PutNumber("Recursive Y-Axis Average:", ((yAcceleration*0.1) + (0.9*previousX)));
+
+			SmartDashboard::PutNumber("Recursive Z-Axis Average:", ((zAcceleration*0.1) + (0.9*previousX)));
+
+			previousX = (xAcceleration*0.1) + (0.9*previousX);
+			previousY = (yAcceleration*0.1) + (0.9*previousY);
+			previousZ = (zAcceleration*0.1) + (0.9*previousZ);
+			Wait(kUpdatePeriod);
 		}
 	}
 
