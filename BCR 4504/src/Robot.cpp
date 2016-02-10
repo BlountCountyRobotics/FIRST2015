@@ -17,7 +17,7 @@ class Robot: public SampleRobot
 	std::vector<double> gyros;
 	BuiltInAccelerometer *accel = new BuiltInAccelerometer(Accelerometer::Range::kRange_8G);
 	const double kUpdatePeriod = 0.005;
-	const double Kp = 0.03;
+	const double Kp = 0.003;
 	const double Ki = 0.003;
 	
 	double integral(double angle, double x)
@@ -126,10 +126,9 @@ class Robot: public SampleRobot
 				myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 			}
 			Wait(0.005);
-		}
 		double previousX = 0;
 		double previousY = 0;
-		double previousZ = 1;
+		double previousZ = 0;
 		double xAcceleration = accel->GetX();
 		double yAcceleration = accel->GetY();
 		double zAcceleration = accel->GetZ();
@@ -148,8 +147,9 @@ class Robot: public SampleRobot
 		previousY = (yAcceleration*0.1) + (0.9*previousY);
 		previousZ = (zAcceleration*0.1) + (0.9*previousZ);
 		Wait(kUpdatePeriod);
-	}
 
+		}
+	}
 	void Test() override
 	{
 		for(int x = 0; x < 10000; x++)
