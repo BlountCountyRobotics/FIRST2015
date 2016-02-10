@@ -125,7 +125,7 @@ class Robot: public SampleRobot
 			{
 				myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 			}
-			Wait(0.005);
+			Wait(0.005);  //Working, it had to be in a while loop
 		double previousX = 0;
 		double previousY = 0;
 		double previousZ = 0;
