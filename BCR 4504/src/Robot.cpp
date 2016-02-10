@@ -14,65 +14,49 @@ class Robot: public SampleRobot
 	const std::string autoNameDefault = "Default";
 	AnalogInput *tiltsensor = new AnalogInput(0);
 	AnalogGyro *gyro = new AnalogGyro(1);
-	double gyros[535];
+	std::vector<double> gyros;
 	BuiltInAccelerometer *accel = new BuiltInAccelerometer(Accelerometer::Range::kRange_8G);
 	const double kUpdatePeriod = 0.005;
+	const double Kp = 0.03;
+	const double Ki = 0.003;
 	
-	double integral(double angle, int start)
+	double integral(double angle, double x)
 	{
 		double result = 0;
+		int n = 1;
 		result += gyros[0];
-		for(int i = 1; i <= start - 2; i++)
+		if(x > 0.1)
 		{
-			result += 2*gyros[i];
+			for(double i = 1; i <= x * 10; i += 1)
+			{
+				result += 2*gyros[i];
+				n++;
+			}
 		}
-		if(start > 0)
-		{
-			result += gyros[start - 1];
-		}
-		result *= start/(2*200);
+		result += angle;
+		result *= x/(2*n);
 		return result;
 	}
 
 	void Autonomous() override
 	{
-		//SmartDashboard::PutNumber("Thingy ganagy ",(double)(sizeof(gyros)/sizeof(int)));
-		static const double Kp = 0.03;
-		static const double Ki = 0.003;
 		gyro->Reset();
 		//std::string autoSelected = *((std::string*)chooser->GetSelected());
 		std::string autoSelected = SmartDashboard::GetString("Auto Selector", autoNameDefault);
 		myRobot->SetSafetyEnabled(false);
-		//static int revolutions = 0;
-		for(int x = 0; x < 10000; x++)
-		{
-			double angle = gyro->GetAngle();
-			myRobot->Drive(0.15, -angle * Kp -integral(angle, x/10)*Ki );
-			Wait(0.001);
-			//gyros[x] =  (-angle * Kp);
-			//std"%d,%d,%d\t",(double)((-angle * Kp)),(double)(-angle),(double)(Kp));
-			gyros[x] = angle;
-			if(x % 10 == 0)
-			{
-				//std::cout << x/15 << ' ' << -angle*Kp << ',';
-				std::cout << x/10 << ' ' << -integral(angle, x/10)*Ki << ',';
-
-			}
-			//printf("%p\n", gyros);
-			//Wait(0.01);
-		}
+		double angle = gyro->GetAngle();
+		myRobot->Drive(0.15, -Kp * angle );
+		std::cout << "test" << std::endl;
+		Wait(0.5);
 		//Add condition to stop when the ballast comes into view. Need to wait until vision can be done.
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
 
 	void RobotInit()
 	{
-		myRobot->SetExpiration(0.1);
-		std::cout << "test" << std::endl;
+		myRobot->SetExpiration(1);
 		gyro->SetSensitivity(0.007);
 		gyro->Calibrate();
-		//gyros = (int*)malloc(sizeof(int)*1001);
-		//printf("a:%p\n",gyros);
 	}
 
 	void OperatorControl()
@@ -80,16 +64,16 @@ class Robot: public SampleRobot
 		myRobot->SetSafetyEnabled(false);
 		gyro->Reset();
 		//motor1->EnableControl();
-
 		while (IsOperatorControl() and IsEnabled())
 		{
+			double tiltvalue = (round(abs(tiltsensor->GetValue())/10)*10)*(9.0/197.0);
+			SmartDashboard::PutNumber("Tilt Sensor: ", tiltvalue);
 			SmartDashboard::PutNumber("Motor Y: ", stick->GetY());
 			SmartDashboard::PutNumber("Motor X: ", stick->GetX());
 			bool t_drive = false;
 			bool a_drive = true;
 			static bool flag = true;
 			static bool toggle = true;
-			SmartDashboard::PutNumber("Test: ",toggle);
 			if(stick->GetRawButton(1) && !flag)
 			{
 				toggle = !toggle;
@@ -111,8 +95,7 @@ class Robot: public SampleRobot
 				a_drive = true;
 			}
 			//SmartDashboard::PutNumber("Gyro Rate: ", gyro->GetRate());
-			//SmartDashboard::PutNumber("Gyro Angle: ", fmod(gyro->GetAngle(),360.0));
-			//SmartDashboard::PutNumber("Gyro Angle: ", gyro->GetAngle());
+			SmartDashboard::PutNumber("Gyro Angle: ", fmod(gyro->GetAngle(),360.0));
 			if(stick->GetRawButton(5))
 			{
 				if(stick->GetRawAxis(2) < 0.1)
@@ -143,57 +126,49 @@ class Robot: public SampleRobot
 				myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 			}
 			Wait(0.005);
-			double previousX = 0;
-			double previousY = 0;
-			double previousZ = 1;
-			double xAcceleration = accel->GetX();
-			double yAcceleration = accel->GetY();
-			double zAcceleration = accel->GetZ();
-
-			SmartDashboard::PutNumber("X-Axis G:", xAcceleration);
-			SmartDashboard::PutNumber("Y-Axis G:", yAcceleration);
-			SmartDashboard::PutNumber("Z-Axis G:", zAcceleration);
-
-			SmartDashboard::PutNumber("Recursive X-Axis Average:", ((xAcceleration*0.1) + (0.9*previousX)));
-
-			SmartDashboard::PutNumber("Recursive Y-Axis Average:", ((yAcceleration*0.1) + (0.9*previousX)));
-
-			SmartDashboard::PutNumber("Recursive Z-Axis Average:", ((zAcceleration*0.1) + (0.9*previousX)));
-
-			previousX = (xAcceleration*0.1) + (0.9*previousX);
-			previousY = (yAcceleration*0.1) + (0.9*previousY);
-			previousZ = (zAcceleration*0.1) + (0.9*previousZ);
-			Wait(kUpdatePeriod);
 		}
+		double previousX = 0;
+		double previousY = 0;
+		double previousZ = 1;
+		double xAcceleration = accel->GetX();
+		double yAcceleration = accel->GetY();
+		double zAcceleration = accel->GetZ();
+
+		SmartDashboard::PutNumber("X-Axis G:", xAcceleration);
+		SmartDashboard::PutNumber("Y-Axis G:", yAcceleration);
+		SmartDashboard::PutNumber("Z-Axis G:", zAcceleration);
+
+		SmartDashboard::PutNumber("Recursive X-Axis Average:", ((xAcceleration*0.1) + (0.9*previousX)));
+
+		SmartDashboard::PutNumber("Recursive Y-Axis Average:", ((yAcceleration*0.1) + (0.9*previousX)));
+
+		SmartDashboard::PutNumber("Recursive Z-Axis Average:", ((zAcceleration*0.1) + (0.9*previousX)));
+
+		previousX = (xAcceleration*0.1) + (0.9*previousX);
+		previousY = (yAcceleration*0.1) + (0.9*previousY);
+		previousZ = (zAcceleration*0.1) + (0.9*previousZ);
+		Wait(kUpdatePeriod);
 	}
 
 	void Test() override
 	{
-		/*static const double Kp = 0.03;
-		gyro->Reset();*/
-		/*while(true)
+		for(int x = 0; x < 10000; x++)
 		{
+			if(!IsTest())
+				break;
 			double angle = gyro->GetAngle();
-			static int revolutions = 0;
-			if(file == NULL)
-			{
-				SmartDashboard::PutString("Error: ", "Cannot load file");
-			}else
-			{
-				fprintf(file, "%d %c", revolutions, '\t');
-				fprintf(file, "%e %c", (-angle * Kp), '\n');
-				SmartDashboard::PutString("Error: ", " ");
-			}
+			myRobot->Drive(0.15, -Kp*angle );
+			gyros.push_back(angle);
+			std::cout << x << ' ' << Ki*integral(angle, x) << ',';
+			printf("%d %e,", x, Ki*integral(angle, x));
 			Wait(0.01);
-			revolutions++;
 		}
-		fclose(file);*/
+		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
 
 	void Disabled()
 	{
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
-		//fclose(file);
 	}
 
 };
