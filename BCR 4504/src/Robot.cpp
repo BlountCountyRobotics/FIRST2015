@@ -3,7 +3,7 @@
 
 class Robot: public SampleRobot
 {
-	struct ParticleReport
+	/*struct ParticleReport
 	{
 		double PercentAreaToImageArea;
 		double Area;
@@ -35,14 +35,14 @@ class Robot: public SampleRobot
 
 	Scores scores;
 	ParticleFilterCriteria2 crit[1];
-	ParticleFilterOptions2 options = {0,0,1,1};
+	ParticleFilterOptions2 options = {0,0,1,1};*/
 	const int PCM_ID = 0;
 	const int CAN_ID = 5;
 	
 	//Compressor *compressor = new Compressor(PCM_ID);
 	//Solenoid *solenoid = new Solenoid(CAN_ID, PCM_ID);
-	CANTalon *right = new CANTalon(0);
-	CANTalon *left = new CANTalon(1);
+	CANTalon *right = new CANTalon(1);
+	CANTalon *left = new CANTalon(0);
 	//CANTalon *motor1 = new CANTalon(2);
 	//CANTalon *motor2 = new CANTalon(3);
 	Joystick *stick = new Joystick(0);
@@ -57,6 +57,11 @@ class Robot: public SampleRobot
 	const double kUpdatePeriod = 0.005;
 	const double Kp = 0.003;
 	const double Ki = 0.003;
+	//CameraServer x;
+	//AxisCamera *camera;
+	//Image *camimage;
+
+public:
 	
 	/*double integral(double angle, double x)
 	{
@@ -80,19 +85,19 @@ class Robot: public SampleRobot
 	{
 		gyro->Reset();
 		
-		int partnum = 0;
-		SmartDashboard::PutNumber("Particle Amount ",partnum);
+		//int partnum = 0;
+		//SmartDashboard::PutNumber("Particle Amount ",partnum);
 		
 		std::string autoSelected = SmartDashboard::GetString("Auto Selector", autoNameDefault);
 		
 		myRobot->SetSafetyEnabled(false);
 		
-		while(IsAutonomous() && IsEnabled() && flag)
+		while(IsAutonomous() && IsEnabled() /*&& flag*/)
 		{
-			/*double angle = gyro->GetAngle();
+			double angle = gyro->GetAngle();
 			myRobot->Drive(0.15, -Kp * angle );
-			Wait(0.5);*/
-			camera->GetImage(camimage);
+			Wait(0.5);
+			/*camera->GetImage(camimage);
 			myRobot->Drive(0.0,0.0);
 			error = imaqColorThreshold(binimage,camimage,255, IMAQ_HSV, &hue, &sat, &val);
 			error = imaqCountParticles(binimage, 1, &partnum);
@@ -117,10 +122,10 @@ class Robot: public SampleRobot
 				SmartDashboard::PutBoolean("IsTarget: ", isTarget);
 				double distance = computeDistance(binimage, partvec[0]);
 				SmartDashboard::PutNumber("Distance: ", distance);
-			}
+			}*/
 		}
-		camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
-		binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
+		//camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
+		//binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
 
@@ -129,9 +134,9 @@ class Robot: public SampleRobot
 		myRobot->SetExpiration(1);
 		gyro->SetSensitivity(0.007);
 		gyro->Calibrate();
-		camera = new AxisCamera("axis-camera.local");
-		camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
-		binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
+	//	camera = new AxisCamera("axis-camera.local");
+	//	camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
+		//binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
 	}
 
 	void OperatorControl()
@@ -141,8 +146,8 @@ class Robot: public SampleRobot
 		//motor1->EnableControl();
 		while (IsOperatorControl() and IsEnabled())
 		{
-			camera->GetImage(camimage);
-
+		//	camera->GetImage(camimage);
+		//	x.SetImage(camimage);
 			double tiltvalue = (round(abs(tiltsensor->GetValue())/10)*10)*(9.0/197.0);
 			SmartDashboard::PutNumber("Tilt Sensor: ", tiltvalue);
 			SmartDashboard::PutNumber("Motor Y: ", stick->GetY());
@@ -247,7 +252,7 @@ class Robot: public SampleRobot
 	{
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
-
+/*
 	bool istarget(ParticleReport target)
 	{
 		bool flag = false;
@@ -284,7 +289,7 @@ class Robot: public SampleRobot
 		//we want descending sort order
 		return particle1.PercentAreaToImageArea > particle2.PercentAreaToImageArea;
 	}
-
+*/
 };
 
 START_ROBOT_CLASS(Robot)
