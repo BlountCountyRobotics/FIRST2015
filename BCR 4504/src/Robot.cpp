@@ -36,8 +36,11 @@ class Robot: public SampleRobot
 	Scores scores;
 	ParticleFilterCriteria2 crit[1];
 	ParticleFilterOptions2 options = {0,0,1,1};
+	const int PCM_ID = 0;
+	const int CAN_ID = 5;
 	
-	Compressor *compressor = new Compressor(3);
+	//Compressor *compressor = new Compressor(PCM_ID);
+	//Solenoid *solenoid = new Solenoid(CAN_ID, PCM_ID);
 	CANTalon *right = new CANTalon(0);
 	CANTalon *left = new CANTalon(1);
 	//CANTalon *motor1 = new CANTalon(2);
@@ -112,8 +115,12 @@ class Robot: public SampleRobot
 				sort(partvec.begin(), partvec.end(), CompareParticleSizes);
 				bool isTarget = istarget(partvec[0]);
 				SmartDashboard::PutBoolean("IsTarget: ", isTarget);
+				double distance = computeDistance(binimage, partvec[0]);
+				SmartDashboard::PutNumber("Distance: ", distance);
 			}
 		}
+		camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
+		binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
 
@@ -134,6 +141,8 @@ class Robot: public SampleRobot
 		//motor1->EnableControl();
 		while (IsOperatorControl() and IsEnabled())
 		{
+			camera->GetImage(camimage);
+
 			double tiltvalue = (round(abs(tiltsensor->GetValue())/10)*10)*(9.0/197.0);
 			SmartDashboard::PutNumber("Tilt Sensor: ", tiltvalue);
 			SmartDashboard::PutNumber("Motor Y: ", stick->GetY());
@@ -150,7 +159,7 @@ class Robot: public SampleRobot
 			{
 				flag = false;
 			}
-			compressor->SetClosedLoopControl(toggle);
+			//compressor->SetClosedLoopControl(toggle);
 			if(buttons->GetRawButton(7))
 			{
 				SmartDashboard::PutString("Drive Mode: ", "Tank Drive");
@@ -164,6 +173,7 @@ class Robot: public SampleRobot
 			}
 			//SmartDashboard::PutNumber("Gyro Rate: ", gyro->GetRate());
 			SmartDashboard::PutNumber("Gyro Angle: ", fmod(gyro->GetAngle(),360.0));
+			//SmartDashboard::PutNumber("Distance to Image:, ", computeDistance(binimage, ));
 			if(stick->GetRawButton(5))
 			{
 				if(stick->GetRawAxis(2) < 0.1)
@@ -193,7 +203,6 @@ class Robot: public SampleRobot
 			{
 				myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 			}
-			Wait(0.005);  //Working, it had to be in a while loop
 			double previousX = 0;
 			double previousY = 0;
 			double previousZ = 0;
@@ -217,6 +226,7 @@ class Robot: public SampleRobot
 			Wait(kUpdatePeriod);
 		}
 	}
+
 	void Test() override
 	{
 		/*8for(int x = 0; x < 10000; x++)
