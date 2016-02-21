@@ -3,51 +3,18 @@
 
 class Robot: public SampleRobot
 {
-	/*struct ParticleReport
-	{
-		double PercentAreaToImageArea;
-		double Area;
-		double BoundingRectLeft;
-		double BoundingRectTop;
-		double BoundingRectRight;
-		double BoundingRectBottom;
-	};
-	struct Scores
-	{
-		double Area;
-		double Aspect;
-	};
-	Image *camimage;
-	Image *binimage;
-	int error;
-	AxisCamera *camera;
-	bool flag = true;
-	CameraServer x;
-
-	Range hue = {101,64};
-	Range sat = {88,255};
-	Range val = {134,255};
-
-	double AREA_MINIMUM = .25;
-	double AREA_MAXIMUM = .4;
-	double minscore = 75;
-	double VIEW_ANGLE = 64;
-
-	Scores scores;
-	ParticleFilterCriteria2 crit[1];
-	ParticleFilterOptions2 options = {0,0,1,1};*/
-	const int PCM_ID = 0;
-	const int CAN_ID = 5;
-	
-	//Compressor *compressor = new Compressor(PCM_ID);
-	//Solenoid *solenoid = new Solenoid(CAN_ID, PCM_ID);
+	typedef void (*funcp)(bool on);
 	CANTalon *right = new CANTalon(1);
 	CANTalon *left = new CANTalon(0);
-	//CANTalon *motor1 = new CANTalon(2);
-	//CANTalon *motor2 = new CANTalon(3);
+	Solenoid *armup = new Solenoid(3);
+	Solenoid *armdown = new Solenoid(4);
+	Solenoid *gripper = new Solenoid(5);
+	Solenoid *shooter = new Solenoid(6);
+	Solenoid *gearshift = new Solenoid(7);
+	Compressor *compressor = new Compressor(0);
 	Joystick *stick = new Joystick(0);
 	Joystick *buttons = new Joystick(1);
-	RobotDrive *myRobot = new RobotDrive(left, right);
+	RobotDrive *myRobot = new RobotDrive(left, right/*, fr, bl*/);
 	SendableChooser *chooser = new SendableChooser();
 	const std::string autoNameDefault = "Default";
 	AnalogInput *tiltsensor = new AnalogInput(0);
@@ -57,30 +24,22 @@ class Robot: public SampleRobot
 	const double kUpdatePeriod = 0.005;
 	const double Kp = 0.003;
 	const double Ki = 0.003;
-	//CameraServer x;
-	//AxisCamera *camera;
-	//Image *camimage;
-
+	CameraServer camserver;
+	AxisCamera *camera;
+	Image *camimage;
+	int error = 0;
 public:
-	
-	/*double integral(double angle, double x)
+	void toggle(funcp, bool joy, bool curr, bool &flag)
 	{
-		double result = 0;
-		int n = 1;
-		result += gyros[0];
-		if(x > 0.1)
+		if(joy && !flag)
 		{
-			for(double i = 1; i <= x * 10; i += 1)
-			{
-				result += 2*gyros[i];
-				n++;
-			}
+			funcp(!curr);
+			flag = true;
+		}else if(!joy && flag)
+		{
+			flag = false;
 		}
-		result += angle;
-		result *= x/(2*n);
-		return result;
-	}*/
-
+	}
 	void Autonomous() override
 	{
 		gyro->Reset();
@@ -97,35 +56,7 @@ public:
 			double angle = gyro->GetAngle();
 			myRobot->Drive(0.15, -Kp * angle );
 			Wait(0.5);
-			/*camera->GetImage(camimage);
-			myRobot->Drive(0.0,0.0);
-			error = imaqColorThreshold(binimage,camimage,255, IMAQ_HSV, &hue, &sat, &val);
-			error = imaqCountParticles(binimage, 1, &partnum);
-			x.SetImage(binimage);
-			crit[0] = {IMAQ_MT_AREA_BY_IMAGE_AREA, (float)AREA_MINIMUM, 100.0, false, false};
-			flag = false;
-			if(partnum > 0)
-			{
-				std::vector<ParticleReport> partvec;
-				for(int partindex = 0; partindex < partnum; partindex++)
-				{
-					ParticleReport par;
-					imaqMeasureParticle(binimage, partindex, 0, IMAQ_MT_AREA, &(par.Area));
-					imaqMeasureParticle(binimage, partindex, 0, IMAQ_MT_BOUNDING_RECT_TOP, &(par.BoundingRectTop));
-					imaqMeasureParticle(binimage, partindex, 0, IMAQ_MT_BOUNDING_RECT_LEFT, &(par.BoundingRectLeft));
-					imaqMeasureParticle(binimage, partindex, 0, IMAQ_MT_BOUNDING_RECT_BOTTOM, &(par.BoundingRectBottom));
-					imaqMeasureParticle(binimage, partindex, 0, IMAQ_MT_BOUNDING_RECT_RIGHT, &(par.BoundingRectRight));
-					partvec.push_back(par);
-				}
-				sort(partvec.begin(), partvec.end(), CompareParticleSizes);
-				bool isTarget = istarget(partvec[0]);
-				SmartDashboard::PutBoolean("IsTarget: ", isTarget);
-				double distance = computeDistance(binimage, partvec[0]);
-				SmartDashboard::PutNumber("Distance: ", distance);
-			}*/
 		}
-		//camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
-		//binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
 		myRobot->SetLeftRightMotorOutputs(0.0, 0.0);
 	}
 
@@ -134,9 +65,8 @@ public:
 		myRobot->SetExpiration(1);
 		gyro->SetSensitivity(0.007);
 		gyro->Calibrate();
-	//	camera = new AxisCamera("axis-camera.local");
-	//	camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
-		//binimage = imaqCreateImage(IMAQ_IMAGE_U8,0);
+		camera = new AxisCamera("axis-camera.local");
+		camimage = imaqCreateImage(IMAQ_IMAGE_RGB,0);
 	}
 
 	void OperatorControl()
@@ -146,8 +76,9 @@ public:
 		//motor1->EnableControl();
 		while (IsOperatorControl() and IsEnabled())
 		{
-		//	camera->GetImage(camimage);
-		//	x.SetImage(camimage);
+			int partnum = 0;
+			camera->GetImage(camimage);
+			camserver.SetImage(camimage);
 			double tiltvalue = (round(abs(tiltsensor->GetValue())/10)*10)*(9.0/197.0);
 			SmartDashboard::PutNumber("Tilt Sensor: ", tiltvalue);
 			SmartDashboard::PutNumber("Motor Y: ", stick->GetY());
@@ -155,16 +86,60 @@ public:
 			bool t_drive = false;
 			bool a_drive = true;
 			static bool flag = true;
-			static bool toggle = true;
-			if(stick->GetRawButton(1) && !flag)
+			static bool flag2 = true;
+			static bool flag3 = true;
+			//static bool toggle = true;
+			//void toggle(funcp, bool joy, bool curr, bool &flag)
+			toggle(compressor->SetCompressor,stick->GetRawButton(1),compressor->Enabled(),flag);
+			/*if(stick->GetRawButton(1) && !flag)
 			{
-				toggle = !toggle;
+				compressor->SetCompressor(!compressor->Enabled());
 				flag = true;
 			}else if(!stick->GetRawButton(1) && flag)
 			{
 				flag = false;
+			}*/
+			//Porculus arm lifting toggle?
+
+			if(buttons->GetRawButton(2) && !flag2)
+			{
+				armup->Set(true);
+				armdown->Set(false);
+				flag2 = true;
+			}else if(!buttons->GetRawButton(2) && flag2)
+			{
+				armup->Set(false);
+				armdown->Set(true);
+				flag2 = false;
 			}
-			//compressor->SetClosedLoopControl(toggle);
+			//Gear Shift toggle
+			toggle(gearshift->Set,buttons->GetRawButton(3),gearshift->Get(),flag3);
+			/*if(buttons->GetRawButton(3) && !flag3)
+			{
+				gearshift->Set(true);
+				flag3 = true;
+			}else if(!buttons->GetRawButton(3) && flag3)
+			{
+				gearshift->Set(false);
+				flag3 = false;
+			}*/
+			//Gripper on?
+			if(buttons->GetRawButton(9))
+			{
+
+			}
+			//Degrip?
+			if(buttons->GetRawButton(10))
+			{
+
+			}
+			//Shoot?
+			if(buttons->GetRawButton(11))
+			{
+				shooter->Set(true);
+				wait(0.05);
+				shooter->Set(false);
+			}
 			if(buttons->GetRawButton(7))
 			{
 				SmartDashboard::PutString("Drive Mode: ", "Tank Drive");
@@ -176,6 +151,7 @@ public:
 				t_drive = false;
 				a_drive = true;
 			}
+
 			//SmartDashboard::PutNumber("Gyro Rate: ", gyro->GetRate());
 			SmartDashboard::PutNumber("Gyro Angle: ", fmod(gyro->GetAngle(),360.0));
 			//SmartDashboard::PutNumber("Distance to Image:, ", computeDistance(binimage, ));
