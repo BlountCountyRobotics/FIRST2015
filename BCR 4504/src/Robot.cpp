@@ -3,14 +3,14 @@
 
 class Robot: public SampleRobot
 {
-	typedef void (*funcp)(bool on);
+	//typedef void (*funcp)(bool on);
 	CANTalon *right = new CANTalon(1);
 	CANTalon *left = new CANTalon(0);
-	Solenoid *armup = new Solenoid(3);
-	Solenoid *armdown = new Solenoid(4);
-	Solenoid *gripper = new Solenoid(5);
-	Solenoid *shooter = new Solenoid(6);
-	Solenoid *gearshift = new Solenoid(7);
+	DoubleSolenoid *arm = new DoubleSolenoid(6,7);
+	Solenoid *gripper = new Solenoid(1);
+	Solenoid *gripper2 = new Solenoid(4);
+	Solenoid *shooter = new Solenoid(5);
+	//Solenoid *gearshift = new Solenoid(7);
 	Compressor *compressor = new Compressor(0);
 	Joystick *stick = new Joystick(0);
 	Joystick *buttons = new Joystick(1);
@@ -29,7 +29,7 @@ class Robot: public SampleRobot
 	Image *camimage;
 	int error = 0;
 public:
-	void toggle(funcp, bool joy, bool curr, bool &flag)
+	/*void toggle(funcp, bool joy, bool curr, bool &flag)
 	{
 		if(joy && !flag)
 		{
@@ -39,7 +39,7 @@ public:
 		{
 			flag = false;
 		}
-	}
+	}*/
 	void Autonomous() override
 	{
 		gyro->Reset();
@@ -76,7 +76,6 @@ public:
 		//motor1->EnableControl();
 		while (IsOperatorControl() and IsEnabled())
 		{
-			int partnum = 0;
 			camera->GetImage(camimage);
 			camserver.SetImage(camimage);
 			double tiltvalue = (round(abs(tiltsensor->GetValue())/10)*10)*(9.0/197.0);
@@ -86,22 +85,25 @@ public:
 			bool t_drive = false;
 			bool a_drive = true;
 			static bool flag = true;
-			static bool flag2 = true;
-			static bool flag3 = true;
+			//static bool flag2 = true;
+			//static bool flag3 = true;
+			//static bool flag4 = true;
+			SmartDashboard::PutBoolean("Compressor ",compressor->Enabled());
 			//static bool toggle = true;
 			//void toggle(funcp, bool joy, bool curr, bool &flag)
-			toggle(compressor->SetCompressor,stick->GetRawButton(1),compressor->Enabled(),flag);
-			/*if(stick->GetRawButton(1) && !flag)
+			//toggle(compressor->SetCompressor,stick->GetRawButton(1),compressor->Enabled(),flag);
+			if(stick->GetRawButton(1) && !flag)
 			{
-				compressor->SetCompressor(!compressor->Enabled());
+				//compressor->SetCompressor(!compressor->Enabled());
+				compressor->Enabled() ? compressor->Stop() : compressor->Start();
 				flag = true;
 			}else if(!stick->GetRawButton(1) && flag)
 			{
 				flag = false;
-			}*/
+			}
 			//Porculus arm lifting toggle?
 
-			if(buttons->GetRawButton(2) && !flag2)
+			/*if(buttons->GetRawButton(2) && !flag2)
 			{
 				armup->Set(true);
 				armdown->Set(false);
@@ -111,9 +113,9 @@ public:
 				armup->Set(false);
 				armdown->Set(true);
 				flag2 = false;
-			}
+			}*/
 			//Gear Shift toggle
-			toggle(gearshift->Set,buttons->GetRawButton(3),gearshift->Get(),flag3);
+			//toggle(gearshift->Set,buttons->GetRawButton(3),gearshift->Get(),flag3);
 			/*if(buttons->GetRawButton(3) && !flag3)
 			{
 				gearshift->Set(true);
@@ -124,21 +126,36 @@ public:
 				flag3 = false;
 			}*/
 			//Gripper on?
-			if(buttons->GetRawButton(9))
+			//toggle(gripper->Set,stick->GetRawButton(2),gripper->Get(),flag4);
+			if(stick->GetRawButton(2))
 			{
-
+				gripper->Set(true);
+				Wait(0.5); // test times
+				gripper2->Set(true);
 			}
 			//Degrip?
-			if(buttons->GetRawButton(10))
+			if(stick->GetRawButton(10))
 			{
-
+				gripper2->Set(false);
+				Wait(0.1);
+				gripper->Set(false);
 			}
 			//Shoot?
-			if(buttons->GetRawButton(11))
+			if(stick->GetRawButton(4))
 			{
 				shooter->Set(true);
-				wait(0.05);
+				Wait(0.05);
 				shooter->Set(false);
+			}
+			if(stick->GetPOV(0) == 90)
+			{
+				arm->Set(DoubleSolenoid::kForward);
+			}else if(stick->GetPOV(0) == 270)
+			{
+				arm->Set(DoubleSolenoid::kReverse);
+			}else
+			{
+				arm->Set(DoubleSolenoid::kOff);
 			}
 			if(buttons->GetRawButton(7))
 			{
